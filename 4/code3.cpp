@@ -4,7 +4,7 @@ using namespace System;
 using namespace System::Threading;
 
 int flag=0;
-const int buf_size=1024;
+const int buf_size=128;
 int buf[buf_size];
 int i=0;
 
@@ -32,12 +32,13 @@ void unlock()
 
 void ThreadProc()
 {
+	
 	while(lock()){}
     for(int j=0;j<(buf_size>>1);j++)
 	{
 		buf[i]=1;
 		i++;
-		Thread::Sleep(rand()%2);
+		Thread::Sleep(rand()%2+1);
 	}
 	unlock();
 }
@@ -48,7 +49,7 @@ void ThreadProc2()
 	{
 		buf[i]=2;
 		i++;
-		Thread::Sleep(rand()%2);
+		Thread::Sleep(rand()%2+1);
 	}
 	unlock();
    }
