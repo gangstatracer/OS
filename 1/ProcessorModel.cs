@@ -111,7 +111,7 @@ namespace ProcessorModel
             if ((cop >> 4) == 0xF)
             {
                 if (
-                    (cop == 0xF0 && ((wires[21] * wires[21]) == 0))
+                    (cop == 0xF0 && ((wires[21] * wires_mask[21]) == 0))
                     || (cop == 0xF1 && (wires[21] * wires_mask[21] > 0))
                     || (cop == 0xF4 && (wires[19] * wires_mask[19] == 0))
                     || (cop == 0xF5 && (wires[19] * wires_mask[19] == 1))
