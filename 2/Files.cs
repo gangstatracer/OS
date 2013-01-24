@@ -9,93 +9,110 @@ namespace files
 {
     class Program
     {
-        
+       static void ExcDisplay (Exception exc, string msg)
+        {
+            Console.WriteLine(msg + exc.Message);
+         }
+
         static int Main(string[] args)
         {
-            bool memory=false;
-            List<UInt64> Numbers = new List<ulong>(); 
+            List<UInt64> Numbers = new List<ulong>();
             StreamReader temp;
-            foreach (string i in args)   
+            foreach (string i in args)
             {
                 try
                 {
-                    temp=new StreamReader(i);
+                    temp = new StreamReader(i);
                 }
-                catch
+                catch(Exception exc)
                 {
-                    throw new Exception("Can't open file "+i);
+                    ExcDisplay(exc, "Can't open file: "+ i);
+                    continue;
                 }
                 string line;
-                while ((line = temp.ReadLine()) != null && !memory) 
+                try
                 {
-                    string pattern = @"(\d{1,10})";
-                    Regex rgx = new Regex(pattern);
-                    MatchCollection matches = rgx.Matches(line);
-                    if (matches.Count > 0)
-                       foreach (Match match in matches)
-                       {
-                           if(!memory)
-                           {
-                               ulong e;
-                               try
-                               {
-                                   e = Convert.ToUInt64(match.Value);
-                               }                          
-                               catch 
-                               {
-                                   throw new Exception("Number is too BIG");
-                               }
-                               String es = e.ToString();
-                               if (es.Equals(match.ToString()))
-                               {
-                                   try
-                                   {
-                                       Numbers.Add(e);
-                                   }
-                                   catch
-                                   {
-                                       memory = true;
-                                       throw new Exception("Not enough memory!");
-                                   }
-                               }
-                           }
-                       }
+                    while ((line = temp.ReadLine()) != null)
+                    {
+                        string pattern = @"(\d{1,10})";
+                        Regex rgx = new Regex(pattern);
+                        MatchCollection matches = rgx.Matches(line);
+                        if (matches.Count > 0)
+                            foreach (Match match in matches)
+                            {
+                                ulong e = Convert.ToUInt64(match.Value);
+                                String es = e.ToString();
+                                if (es.Equals(match.ToString()))
+                                    Numbers.Add(e);
+                            }
+
+                    }
                 }
-                if(!memory)
-                    break;
+                catch (IOException exc)
+                {
+                    ExcDisplay(exc, "Unable to read data");
+                    temp.Close();
+                    continue;
+                }
+                catch (OutOfMemoryException exc)
+                {
+                    ExcDisplay(exc, "Not enough memory");
+                    temp.Close();
+                    return -1;
+                }
+                catch (ArgumentNullException exc)
+                {
+                    ExcDisplay(exc, "Argument NULL");
+                    return -1;
+                }
+                catch (OverflowException exc)
+                {
+                    ExcDisplay(exc, "Overflow: ");
+                    return -1;
+                }
+                catch(Exception exc) 
+                {
+                 ExcDisplay(exc, "Error: ");
+                 return -1;
+                }
+
+              
                 temp.Close();
             }
             try
             {
                 Numbers.Sort();
-            }
-            catch 
-            {
-                throw new Exception("Can't sort numbers. Probably not enough memory");
-            }
-            StreamWriter sw;
-            try
-            {
-                 sw = new StreamWriter("out.txt");
-            }
-            catch
-            {
-                throw new Exception("Can't open output file for writing!");
-            }
-            foreach(int i in Numbers)
-            {
-                try
+                StreamWriter sw;
+                sw = new StreamWriter("out.txt");
+                foreach (int i in Numbers)
                 {
                     sw.WriteLine(i);
                 }
-                catch 
-                {
-                    throw new Exception("Cant't writen to output file!");
-                }
+                sw.Close();
+                return 0;
             }
-            sw.Close();
-            return 0;
+            catch (InvalidOperationException exc)
+            {
+                ExcDisplay(exc, "The exception that is thrown when a method call is invalid for the object's current state.");
+                return -1;
+            }
+            catch (UnauthorizedAccessException exc)
+            {
+                ExcDisplay(exc, "The exception that is thrown when the operating system denies access because of an I/O error or a specific type of security error.");
+                return -1;
+            }
+            catch (IOException exc)
+            {
+                ExcDisplay(exc, "The exception that is thrown when an error occurs, the input-output.");
+                return -1;
+            }
+            catch (Exception exc)
+            {
+                ExcDisplay(exc, "The exception: ");
+                return -1;
+            }
         }
     }
 }
+
 
