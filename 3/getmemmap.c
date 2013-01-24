@@ -30,7 +30,7 @@ uefi_call_wrapper(systab->BootServices->AllocatePool,
 		||(mm[i].Type == EfiACPIReclaimMemory)
 		)s+=mm[i].NumberOfPages;
 		
-	Print(L"%d\r\n",s);
+	Print(L"%d\r\n",s<<12);
 	
 	return EFI_SUCCESS;
 }
