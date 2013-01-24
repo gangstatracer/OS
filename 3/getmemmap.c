@@ -1,20 +1,31 @@
 #include <efi.h>
 #include <efilib.h>
-; ןונגויראÿ ןנמדנאללא הכÿ UEFI
 EFI_STATUS efi_main (EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 {
 	InitializeLib(image, systab);
-	UINTN mms=65536;
+	UINTN mms,mk,ds,dv;
 	int i;
 	int s;
 	EFI_MEMORY_DESCRIPTOR *mm;
-uefi_call_wrapper(systab->BootServices->AllocatePool,
+	EFI_STATUS state;
+	
+	state = uefi_call_wrapper(systab->BootServices->GetMemoryMap,
+				5,
+				&mms,
+				mm,
+				&mk,
+				&ds,
+				&dv);
+	if(state == EFI_BUFFER_TOO_SMALL)
+	if(
+		uefi_call_wrapper(systab->BootServices->AllocatePool,
 				3,
 				EfiLoaderData,
-				sizeof(EFI_MEMORY_DESCRIPTOR)*65536,
-				((void*)&mm));
-	UINTN mk,ds,dv;
-	
+				mms,
+				((void*)&mm))
+		== EFI_SUCCESS
+		)
+	{	
 	uefi_call_wrapper(systab->BootServices->GetMemoryMap,
 				5,
 				&mms,
@@ -30,7 +41,9 @@ uefi_call_wrapper(systab->BootServices->AllocatePool,
 		||(mm[i].Type == EfiACPIReclaimMemory)
 		)s+=mm[i].NumberOfPages;
 		
-	Print(L"%d\r\n",s<<12);
-	
+	Print(L"%d bytes aviable\r\n",s<<12);
+	}
+	else Print (L"Allocation memory fail\r\n");
+	else Print (L"Error \r\n");
 	return EFI_SUCCESS;
 }
