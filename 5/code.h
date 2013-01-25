@@ -10,10 +10,11 @@
 const int threads_cnt = 10;
 ucontext_t main_c, schedule_c, threads_c[threads_cnt];
 char schedule_stack[SIGSTKSZ], threads_st[threads_cnt][SIGSTKSZ];
-int thread_cur, threads_sleep[threads_cnt];
+int treads_run,thread_cur, threads_sleep[threads_cnt];
 queue<int> threads;
 void kb_thread(void * func)
 {
+	threads_run++;
 	getcontext(&threads_c[thread_cur]);
 	threads_c[thread_cur].uc_link = &schedule_c;
     threads_c[thread_cur].uc_stack.ss_sp = threads_st[thread_cur];
@@ -33,6 +34,7 @@ void kb_sleep(int time)
 
 void kb_exit()
 {
+	treads_run--;
 	printf("task %d ends\n", thread_cur);
 	threads_sleep[thread_cur] = -1;
 }
@@ -60,15 +62,21 @@ void AlarmHandler(int SigNumber, siginfo_t * SI, void * icontext)
 void schedule(int sig)
 {
 	thread_cur = -1;
-	int id = treads.front();
-	if(id!= NULL)
+	bool sf = true;
+	while(sf&&(threads_run>0))
 	{
+		id = treads.front();
 		threads.pop();
 		threads.push(id);
+		sf = (threads_sleep[id]!=0);
+	}
+	if(id!= NULL)
+	{		
 		printf("wake up task %d\n", id);
 		thread_cur = id;
+		setcontext(&threads_c[thread_cur]);
 	}
-	setcontext(&threads_c[thread_cur]);
+	setcontext(&main_c);
 }
 
 
@@ -86,6 +94,7 @@ int main()
     schedule_c.uc_stack.ss_size = SIGSTKSZ;
 	makecontext(&schedule_c,(void (*)(void))schedule, 1, SIGUSR1);
 	for(int i=0;i<SIGSTKSZ;i++)threads_sleep[i] = 0;
+	treads_run=0;
 	for (thread_cur = 0; thread_cur < threads_cnt; thread_cur++)
 	{
 		kb_thread();
