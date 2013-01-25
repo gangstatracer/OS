@@ -6,20 +6,20 @@
 #include <string.h>
 #include <time.h>
 #include <queue>
-
+using namespace std;
 const int threads_cnt = 10;
 ucontext_t main_c, schedule_c, threads_c[threads_cnt];
 char schedule_stack[SIGSTKSZ], threads_st[threads_cnt][SIGSTKSZ];
-int treads_run,thread_cur, threads_sleep[threads_cnt];
+int threads_run,thread_cur, threads_sleep[threads_cnt];
 queue<int> threads;
-void kb_thread(void * func)
+void kb_thread(void* func)
 {
 	threads_run++;
 	getcontext(&threads_c[thread_cur]);
 	threads_c[thread_cur].uc_link = &schedule_c;
-    threads_c[thread_cur].uc_stack.ss_sp = threads_st[thread_cur];
-    threads_c[thread_cur].uc_stack.ss_size = SIGSTKSZ;
-	makecontext(&threads_c[thread_cur], func, 0);
+    	threads_c[thread_cur].uc_stack.ss_sp = threads_st[thread_cur];
+    	threads_c[thread_cur].uc_stack.ss_size = SIGSTKSZ;
+	makecontext(&threads_c[thread_cur], (void (*)(void))func, 0);
 }
 
 void kb_sleep(int time)
@@ -34,12 +34,12 @@ void kb_sleep(int time)
 
 void kb_exit()
 {
-	treads_run--;
+	threads_run--;
 	printf("task %d ends\n", thread_cur);
 	threads_sleep[thread_cur] = -1;
 }
 
-void kb_func()
+void kb_func(void *)
 {
 	while(1)
 	{
@@ -63,14 +63,15 @@ void schedule(int sig)
 {
 	thread_cur = -1;
 	bool sf = true;
+	int id=-1;
 	while(sf&&(threads_run>0))
 	{
-		id = treads.front();
+		id = threads.front();
 		threads.pop();
 		threads.push(id);
 		sf = (threads_sleep[id]!=0);
 	}
-	if(id!= NULL)
+	if(id!= -1)
 	{		
 		printf("wake up task %d\n", id);
 		thread_cur = id;
@@ -94,11 +95,11 @@ int main()
     schedule_c.uc_stack.ss_size = SIGSTKSZ;
 	makecontext(&schedule_c,(void (*)(void))schedule, 1, SIGUSR1);
 	for(int i=0;i<SIGSTKSZ;i++)threads_sleep[i] = 0;
-	treads_run=0;
+	threads_run=0;
 	for (thread_cur = 0; thread_cur < threads_cnt; thread_cur++)
 	{
-		kb_thread();
-		threads.pop_back(thread_kur);
+		kb_thread((void *)kb_func);
+		threads.push(thread_cur);
 	}
 	alarm(1);
 	swapcontext(&main_c, &schedule_c);
